@@ -1,7 +1,6 @@
 ---
 name: why
 description: "Use for 'why does X work this way', 'why we picked Y', design rationale, regressions, postmortems, or data-backed thresholds. Discovers available MCPs and queries each evidence category (source control, issue tracker, long-form docs, real-time chat, infrastructure observability, error tracking, product analytics warehouse) in parallel, then returns a cited read on decisions and tradeoffs. Use how for runtime behavior."
-disable-model-invocation: true
 ---
 
 # Why
@@ -10,7 +9,7 @@ Investigate the motivation and intent behind code.
 
 Companion to the `how` skill. `how` answers what the code does and how it works. `why` answers what forces led to its shape.
 
-Each spawn below names a role line in the `pstack-models.mdc` rule and a default. Set `model` to that line's value, or to the default if the rule or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the Task tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message.
+Call `skill` on `pstack-runtime` before the first spawn. Use the `subagent` tool. Start independent children in one message. Set `run_in_background` true unless the next step needs the result. The child does not see this conversation, so the prompt carries the task. Read `~/.dsh/pstack-models.md` for the named role. A missing line means `inherit-parent`: omit `provider` and `model`. Pass them only when the tool exposes those fields and `list_subagent_models` lists the route.
 
 ## Operating Posture
 
@@ -61,7 +60,7 @@ Capture this as seed context (file paths, symbols, commits, PR numbers, linked t
 
 ### Discovery
 
-Before spawning investigators, list the available MCPs from the Cursor environment. Use the available-tools map when present. Otherwise inspect the `mcps/` directory Cursor exposes for enabled MCP servers.
+Before spawning investigators, list connected MCP servers from this session's tools (names prefixed `mcp__`). Use `list_mcp_resources` and `list_mcp_resource_templates` when you need a server's resources.
 
 Map each available MCP to one evidence category:
 
@@ -80,9 +79,7 @@ Aim for a complete **coverage map**, not a minimal one. Document the null, don't
 Launch all matching investigators in a single message so they run concurrently. Don't ask one agent to cover multiple MCPs.
 
 Subagent config (each):
-- `subagent_type`: `generalPurpose`
-- `model`: the `why investigators` line, default `grok-4.7-xhigh-fast`
-- `readonly`: `false` (agent mode). **Do not use readonly/Ask mode.** It strips MCP access, which disables MCP-backed investigators entirely. Investigators still shouldn't write anything.
+- Tool: `subagent`. Role `why investigators`, or inherit the parent when that line is missing. The child keeps its tools, including MCP. The prompt forbids writes. The next step needs every finding, so set `run_in_background: false`.
 
 Each investigator gets:
 1. The base prompt from `references/investigator-prompt.md`
@@ -122,11 +119,7 @@ If your scope assessment suggests a single-commit trivial target where the PR de
 
 ## Step 4. Synthesize
 
-Spawn one synthesizer subagent:
-
-- `subagent_type`: `generalPurpose`
-- `model`: the `why synthesizer` line, default `claude-opus-5-5-max`
-- `readonly`: `false` (agent mode). The synthesizer's quality check spot-verifies citations, which can require MCP access. Readonly/Ask mode strips MCPs and defeats that.
+Spawn one synthesizer with `subagent`. Role `why synthesizer`, or inherit the parent when that line is missing. The child keeps its tools, including MCP, so it can spot-verify citations. The prompt forbids writes. Step 5 needs the synthesis, so set `run_in_background: false`.
 
 The synthesizer gets:
 1. The investigator findings, including any null results and any categories skipped with justification

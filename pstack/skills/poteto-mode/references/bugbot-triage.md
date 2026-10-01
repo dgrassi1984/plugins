@@ -1,6 +1,8 @@
 # Bugbot triage
 
-Use this reference when the Babysit playbook (`../playbooks/babysit.md`) handles Bugbot or review-automation comments. The goal is not to ignore Bugbot by default. The goal is to stop treating every comment as a required code change.
+"Bugbot" in the examples means any automated review comment.
+
+Use this reference when the Babysit playbook (`../playbooks/babysit.md`) handles automated review comments. The goal is not to ignore Bugbot by default. The goal is to stop treating every comment as a required code change.
 
 ## Decision rubric
 

@@ -4,19 +4,31 @@ i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked 
 
 there's a growing sense that ai writes too much slop code. i agree. i don't want to ship like a team of twenty slop artists. throughput without quality is not a goal i aspire to. if you want to go fast, go deep first. 
 
-**pstack is my answer.** these are the same skills i use everyday to ship high quality code at Cursor. this turns cursor into a real engineering team. the goal is not to maximize loc, in fact it's the opposite. pstack helps you write less, but higher quality code.
+**pstack is my answer.** these are the same skills i use everyday to ship high quality code. this fork runs them on DeepSeek Harness. the goal is not to maximize loc, in fact it's the opposite. pstack helps you write less, but higher quality code.
 
 **pstack gives you fearless parallelism.** when you can go deep on one agent and trust it to write good, verifiable code, you can truly parallelize with confidence. start multiple agents up with `poteto-mode` and trust that they'll apply rigorous engineering principles to their work.
 
-**cursor gives you the best of all worlds.** every frontier model has its strengths and weaknesses. use any model with pstack. in fact, many of my skills use multi-model workflows to take advantage of each model's unique strengths.
+**use the models you have.** every frontier model has its strengths and weaknesses. use any model with pstack. many of the skills use multi-model workflows to take advantage of each model's unique strengths. the bindings live in [`pstack-runtime`](./skills/pstack-runtime/SKILL.md).
 
 fork it. improve it. make it yours. PRs are welcome! 
 
 ## install
 
+from the directory that contains `pstack/`:
+
 ```bash
-/add-plugin pstack
+src=pstack/skills
+dest="${DSH_HOME:-$HOME/.dsh}/skills"
+for d in "$src"/*; do
+  name=$(basename "$d")
+  rm -rf "$dest/$name"
+  cp -R "$d" "$dest/$name"
+done
 ```
+
+DSH discovers `<name>/SKILL.md` one level deep. a project can instead point `customSkillDirs` at `pstack/skills`, or copy the same directories into `.dsh/skills`. do not install the repo root as a skill root. reload is automatic. details are in [docs/dsh.md](./docs/dsh.md).
+
+Cursor's `/add-plugin pstack` does not apply on this fork.
 
 ## get started
 
@@ -90,7 +102,7 @@ the full rules and playbooks live in [`skills/poteto-mode/SKILL.md`](./skills/po
 
 [`/poteto-mode`](./skills/poteto-mode/SKILL.md) is also a sticky mode: once entered it stays on across turns, applying itself when a playbook matches or the task needs rigor and staying out of the way otherwise. opt out any time by saying so.
 
-[`/poteto-mode`](./skills/poteto-mode/SKILL.md) works extremely well with cursor's `/loop` command. you can make cursor work for many hours without sacrificing rigor.
+[`/poteto-mode`](./skills/poteto-mode/SKILL.md) stays on a long run through `create_goal` and a finish predicate. you can leave it working for hours without sacrificing rigor.
 
 ## skills
 
@@ -120,7 +132,11 @@ the full rules and playbooks live in [`skills/poteto-mode/SKILL.md`](./skills/po
 | [`/interrogate`](./skills/interrogate/SKILL.md) | you have a diff and want several different models to try to break it, including a strict code-quality lens. |
 | [`/automate-me`](./skills/automate-me/SKILL.md) | you want your own `-mode` skill, drafted from how you've actually worked. |
 | [`/make-bot-ui`](./skills/make-bot-ui/SKILL.md) | you want a page or dashboard whose buttons wake a Grok Bot over a webhook, including the sender-key handoff and Tailscale. |
-| [`/setup-pstack`](./skills/setup-pstack/SKILL.md) | you want to pick which models pstack uses per role. detects your models and writes a config rule. |
+| [`/pstack-runtime`](./skills/pstack-runtime/SKILL.md) | a pstack skill names a model role, a subagent, a transcript, or a verification surface. this is the binding. |
+| [`/setup-pstack`](./skills/setup-pstack/SKILL.md) | you want to pick which models pstack uses per role. detects your models and writes `~/.dsh/pstack-models.md`. |
+| [`/setup-benny`](./skills/setup-benny/SKILL.md) | you want Benny configured in a repo. there is no scheduler. |
+| [`/benny-triage`](./skills/benny-triage/SKILL.md) | you have an issue report to classify, dedupe, and verdict. |
+| [`/benny-reproduce`](./skills/benny-reproduce/SKILL.md) | a bug or performance report needs a real repro, and maybe a bounded draft fix. |
 | [`/reflect`](./skills/reflect/SKILL.md) | a long task landed and you want the recipe captured as a skill edit. |
 | [`/teach`](./skills/teach/SKILL.md) | you want to actually understand a change or subsystem, not just have it summarized. runs how + why and weaves one plain explanation, built up diagram by diagram. |
 | [`/tdd`](./skills/tdd/SKILL.md) | you're fixing a bug and there's a cheap local test path. write the failing test first, then the fix. |
@@ -183,13 +199,9 @@ automate-me:       /automate-me
 
 </details>
 
-## the `poteto-agent` and Comment Sicko subagents
+## workers
 
-pstack also ships a subagent that runs my style end to end. spawn it from a parent agent via [`subagent_type: "poteto-agent"`](./agents/poteto-agent.md). it reads `poteto-mode` in full, including its inline principles index, before doing any work. substituting `generalPurpose` skips that read and drifts.
-
-[`/poteto-mode`](./skills/poteto-mode/SKILL.md) and [`subagent_type: "poteto-agent"`](./agents/poteto-agent.md) route through the same wrapper.
-
-pstack also ships [Comment Sicko](./agents/comment-sicko.md), a read-only comment reviewer available as `subagent_type: "Comment Sicko"`. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md), not directly.
+spawn a `subagent` whose prompt loads [`poteto-mode`](./skills/poteto-mode/SKILL.md) via the `skill` tool before any work, including the inline principles index. a comment review child loads [`comment-sicko`](./skills/comment-sicko/SKILL.md) the same way and stays read-only. the parent applies accepted deletions. usually invoke comment review through [`/no-comments`](./skills/no-comments/SKILL.md), not directly.
 
 ## principles
 
@@ -226,19 +238,15 @@ twenty-three short skills, one principle each. `poteto-mode` indexes them inline
 
 </details>
 
-## not shipped here
+## what this fork uses instead
 
-a few things `poteto-mode` references but doesn't bundle:
+comment and prose cleanup use [`no-comments`](./skills/no-comments/SKILL.md) and [`unslop`](./skills/unslop/SKILL.md). browser checks use Playwright MCP when it is connected. CLI checks use the shell. [`pstack-runtime`](./skills/pstack-runtime/SKILL.md) is the binding skill. the map is in [docs/dsh.md](./docs/dsh.md).
 
-- `/deslop` and the `deslop` skill ship in the `cursor-team-kit` plugin.
-- `control-cli` (for CLIs and TUIs) and `control-ui` (for browser, Electron, web) ship in `cursor-team-kit` too.
-- `/create-skill` is a cursor built-in. cursor also ships a built-in `/babysit`; inside `poteto-mode`, the [babysit playbook](./skills/poteto-mode/playbooks/babysit.md) supersedes it for pr-status requests.
-
-install `cursor-team-kit` alongside pstack if you want the full set.
+inside `poteto-mode`, the [babysit playbook](./skills/poteto-mode/playbooks/babysit.md) is the pr-status path.
 
 ## why are there no planning skills?
 
-cursor already has a great plan mode which works great with pstack. but personally, i don't believe in planning. the best spec is code. if you do want to make a plan, [`/poteto-mode`](./skills/poteto-mode/SKILL.md) covers it, but it's not a default. 
+i don't believe in planning. the best spec is code. if you do want to make a plan, [`/poteto-mode`](./skills/poteto-mode/SKILL.md) covers it, but it's not a default. 
 
 ## make it yours
 
@@ -246,15 +254,13 @@ cursor already has a great plan mode which works great with pstack. but personal
 
 type [`/automate-me`](./skills/automate-me/SKILL.md). it mines your recent transcripts, drafts a `<your-name>-mode` skill from how you've actually worked, and routes through pstack underneath. you keep pstack as the base and end up with your own routing skill alongside `poteto-mode`.
 
-models are configurable too. type [`/setup-pstack`](./skills/setup-pstack/SKILL.md). it detects the models you have access to and writes a small always-applied rule mapping each role (code, judgment, the review panels) to a model. every skill reads it and falls back to sensible defaults when the rule is absent, so you override only what you want.
+models are configurable too. type [`/setup-pstack`](./skills/setup-pstack/SKILL.md). it detects the models you have access to and writes `~/.dsh/pstack-models.md`, mapping each role (code, judgment, the review panels) to a model. every skill reads it and inherits the parent model when a role line is absent, so you override only what you want.
 
-a rule written before 0.15.3 pins the old default models. delete those role lines, or delete the file, then run `/setup-pstack` again. a rerun keeps any role whose model differs from the default.
+if that file pins models you no longer want, delete those role lines, or delete the file, then run `/setup-pstack` again. a rerun keeps any role whose model differs from the default.
 
-## automations
+## benny
 
-pstack also ships a dormant [benny automation pack](./automations/benny/). benny triages slack issue reports, then reproduces and fixes confirmed bugs with real ui evidence. its files are not registered as slash skills.
-
-to set it up, point cursor at [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md). setup copies the pack into the target repository at `.cursor/automations/benny/`, enables pstack there for shared skills, and keeps user configuration outside the copied pack.
+benny triages an issue report, then reproduces a confirmed bug and may open a bounded draft fix. there is no scheduler. ask for [`/setup-benny`](./skills/setup-benny/SKILL.md), then [`/benny-triage`](./skills/benny-triage/SKILL.md) or [`/benny-reproduce`](./skills/benny-reproduce/SKILL.md). configuration lives in the target repo at `.dsh/benny/`. the archived pack notes are in [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md).
 
 ## license
 

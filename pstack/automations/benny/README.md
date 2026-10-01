@@ -1,23 +1,16 @@
 # benny
 
-benny gives you two cursor automations for slack issue reports. one triages each report. the other reproduces confirmed bugs and may prepare a small draft fix.
+benny triages an issue report, then reproduces a confirmed bug and may prepare a small draft fix.
 
-the files in this directory are dormant setup and automation sources. they do not appear as slash skills.
+DeepSeek Harness has no Cursor Slack automation and no plugin enablement file. These procedures run when you ask. They do not watch a channel by themselves.
 
 ## set it up
 
-1. point cursor at [`FOR_AGENTS.md`](./FOR_AGENTS.md) and name the target repository.
-2. let setup merge this whole directory into the target at `.cursor/automations/benny/`. it must preserve destination-only files and review conflicts instead of overwriting local edits.
-3. let setup enable pstack in the target repository's `.cursor/settings.json` for shared dependencies:
+1. ask for [`setup-benny`](../../skills/setup-benny/SKILL.md) and name the target repository.
+2. let it write configuration under `.dsh/benny/` in that repository. it must not overwrite files you already own there.
+3. shared skills (`how`, `why`, `tdd`, `unslop`, and the principle skills) load with the `skill` tool. nothing is enabled in a settings file.
+4. adapt [`configuration.example.yaml`](./templates/configuration.example.yaml) and the feature-map example from [`benny-reproduce`](../../skills/benny-reproduce/SKILL.md). keep secrets out of the repo.
+5. commit `.dsh/benny/` only if you want the config in git, and never commit a token.
+6. when a report is ready, ask for [`benny-triage`](../../skills/benny-triage/SKILL.md). after a bug or performance verdict, ask for [`benny-reproduce`](../../skills/benny-reproduce/SKILL.md).
 
-```json
-{
-	"plugins": {
-		"pstack": { "enabled": true }
-	}
-}
-```
-
-4. keep user-owned configuration outside the copied pack, for example in `.cursor/benny/`. adapt [`configuration.example.yaml`](./templates/configuration.example.yaml) and [`feature-map.example.md`](./skills/reproduce-and-fix-issues/references/feature-map.example.md).
-5. commit `.cursor/settings.json`, `.cursor/automations/benny/`, and any secret-free configuration before enabling either automation.
-6. review each new automation draft or update existing automations in their editors. then send a harmless test report and verify every source-channel post stays in the original thread.
+if a step needs Slack and no Slack tool is connected, the agent stops and says so.

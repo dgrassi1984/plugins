@@ -1,7 +1,6 @@
 ---
 name: interrogate
 description: "Use for \"interrogate\", \"adversarial review\", \"multi-model review\", \"challenge this\", \"stress test this code\", \"find blind spots\", or \"tear this apart\". Multiple LLM reviewers challenge changes from independent angles."
-disable-model-invocation: true
 ---
 
 # Interrogate
@@ -33,20 +32,9 @@ Write one clear paragraph. If you're unsure about the intent, ask the user befor
 
 ## Step 3, Spawn Reviewers
 
-Launch all reviewers in a single message using the Task tool. Use the `interrogate reviewers` line in `~/.cursor/rules/pstack-models.mdc`, one reviewer per entry, extending or shrinking the Reviewer A/B/C labels below to the configured entry count. If the rule or that line is missing, use the table defaults.
+Launch all reviewers in one message with the `subagent` tool. Use the `interrogate reviewers` line in `~/.dsh/pstack-models.md`, one reviewer per confirmed entry. A missing line means one reviewer on the parent model. Call `skill` on `pstack-runtime` before the first spawn. Use the `subagent` tool. Start independent children in one message. Set `run_in_background` true unless the next step needs the result. The child does not see this conversation, so the prompt carries the task. Read `~/.dsh/pstack-models.md` for the named role. A missing line means `inherit-parent`: omit `provider` and `model`. Pass them only when the tool exposes those fields and `list_subagent_models` lists the route.
 
-| Subagent | Default model |
-|----------|---------------|
-| Reviewer A | `claude-opus-5-5-max` |
-| Reviewer B | `gpt-5.6-sol-max` |
-| Reviewer C | `grok-4.7-xhigh-fast` |
-
-For each reviewer:
-- `subagent_type`: `generalPurpose`
-- `model`: the configured `interrogate reviewers` entry, or the table default with no configured line. For an `auto` or `inherit-parent` entry, omit `model` so that reviewer runs on the parent model.
-- `readonly`: `true`
-
-If the Task tool rejects a configured entry, run that reviewer on the table default of its family and say so. Families go by prefix: `claude-*`, `gpt-*`, and `grok-*`. With no family match, use Reviewer A's default. If it rejects a table default, check the valid slugs in the Task tool's error message, pick the closest equivalent (prefer the highest-reasoning tier of the same family), spawn with it, and open a separate PR to update the default table. Do not block the review on the slug issue. Never treat an alias entry as a rejected slug or apply either fallback to it.
+For each reviewer, spawn a `subagent` and tell it not to write files. Use that reviewer's entry from `interrogate reviewers`. `auto`, `inherit-parent`, or an unconfirmed slug means omit `provider` and `model` and say the child inherited the parent. Step 4 needs every review, so set `run_in_background: false`.
 
 Read `references/reviewer-prompt.md` and fill in the template with:
 1. The stated intent

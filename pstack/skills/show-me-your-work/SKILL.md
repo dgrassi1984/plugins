@@ -1,7 +1,6 @@
 ---
 name: show-me-your-work
 description: "Keep a reviewable decision trail for long-running or unattended work: a TSV log with one row per decision (what, why, evidence, result). Local by default; commit it when a reviewer needs the trail to trust the result. Use for /show-me-your-work, autonomous or multi-phase runs, or work a human reviews after stepping away."
-disable-model-invocation: true
 ---
 
 # Show me your work
@@ -54,7 +53,7 @@ Commit it only when the work is ambitious enough that a reviewer needs the trail
 
 ## Audit the log against the transcript
 
-At the end of the run, before handing back, check the log told the truth. Read this run's transcript under the active workspace's `agent-transcripts/` directory (the system prompt names the path). Don't glob across `~/.cursor/projects/*/`. That reads unrelated private chats. Walk this run's rows against what actually happened. Each stretch of them begins at one of this run's `start` rows, or at the first row if this run created the log, and ends at the next `start` row of another run:
+At the end of the run, before handing back, check the log told the truth. Read this run's session log at `$DSH_HOME/sessions/--<workspace-slug>--/$DSH_SESSION_ID/session*.jsonl.zstd` (`~/.dsh` when unset). Decompress with `zstd -dc`. Do not glob other workspace slugs. Walk this run's rows against what actually happened. Each stretch of them begins at one of this run's `start` rows, or at the first row if this run created the log, and ends at the next `start` row of another run:
 
 - Check that every row maps to a real decision or action.
 - Check that each row's evidence resolves and shows what the row claims.
@@ -64,7 +63,7 @@ Correct the log, not the story. The audit never edits or removes a row, even an 
 
 ## Cross-model review of the trail
 
-Before handing back, spawn a subagent on a different model family from the one that did the work. Self-review is not a substitute. The subagent reads the audit trail and the run's transcript, then flags what the user should pay attention to. Not a redo of the work, a scan for what's suboptimal or risky.
+Before handing back, call `skill` on `pstack-runtime`, then spawn a `subagent`. The reply needs the scan, so set `run_in_background: false`. Pass `provider` and `model` only when the tool schema exposes those fields and `list_subagent_models` lists a route whose family differs from the parent's. Otherwise omit them and say the child inherited the parent. The child does not see this conversation. The prompt carries the log path and the session-log path, and tells the child to decompress `session*.jsonl.zstd` with `zstd -dc` and not to glob other workspace slugs. Self-review is not a substitute when a different confirmed route exists. The child reads the audit trail and the run's session log, then flags what the user should pay attention to. Not a redo of the work, a scan for what's suboptimal or risky.
 
 - Decisions logged with weak or absent evidence.
 - Verification steps skipped or claimed without proof in the transcript.

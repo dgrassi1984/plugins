@@ -27,5 +27,9 @@
 		"planning"
 	],
 	"skills": "./skills/",
-	"agents": "./agents/"
+	"agents": "./agents/",
+	"dsh": {
+		"skills": "./skills/",
+		"agents": "promoted to skills/poteto-agent and skills/comment-sicko; agents/ holds pointers only"
+	}
 }

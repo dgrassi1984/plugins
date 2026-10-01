@@ -22,9 +22,11 @@ prs=$(mktemp)
 gh pr list --author "@me" --state all --limit 1000 \
 	--json number,state,headRefName 2>/dev/null > "$prs" || echo "[]" > "$prs"
 
-# Transcripts dir: ~/.cursor/projects/<slugified-repo-path>/agent-transcripts.
+# Session logs: $DSH_HOME/sessions/--<slug>--/<id>/session*.jsonl.zstd.
+# Slug is the worktree path with the leading slash removed and "/" turned into "-".
+dsh_home="${DSH_HOME:-$HOME/.dsh}"
 slug=$(printf '%s' "$main_wt" | sed 's#^/##; s#/#-#g')
-transcripts="$HOME/.cursor/projects/$slug/agent-transcripts"
+transcripts="$dsh_home/sessions/--${slug}--"
 now=$(date +%s)
 
 printf "SIZE\tAGE\tMERGED\tDIRTY\tREMOTE\tPR\tLAST_CHAT\tBUCKET\tWORKTREE\n"
@@ -60,13 +62,19 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt;
 		'.[] | select(.headRefName==$b) | "#\(.number)/\(.state)"' "$prs" 2>/dev/null | head -1)
 	[ -z "$pr" ] && pr="-"
 
-	# Most recent chat whose transcript operated in this worktree. Match path
+	# Most recent chat whose session log operated in this worktree. Match path
 	# followed by "/" or a quote so glint-482 does not match glint-482-r37.
+	# Logs are zstd JSONL; decompress only the matches rg can see after inflate.
 	last="-"; last_ts=0
 	if [ -d "$transcripts" ]; then
-		f=$(rg -l -e "${wt}/" -e "${wt}\"" "$transcripts" 2>/dev/null \
-			| xargs stat -f '%m %N' 2>/dev/null | sort -rn | head -1)
-		if [ -n "$f" ]; then last_ts=$(echo "$f" | awk '{print $1}')
+		# Search compressed logs one file at a time so a hit keeps the file mtime.
+		hit=$(find "$transcripts" -name 'session*.jsonl.zstd' -print0 2>/dev/null \
+			| while IFS= read -r -d '' z; do
+				if zstd -dc --quiet "$z" 2>/dev/null | rg -q -e "${wt}/" -e "${wt}\""; then
+					stat -f '%m %N' "$z"
+				fi
+			done | sort -rn | head -1)
+		if [ -n "$hit" ]; then last_ts=$(echo "$hit" | awk '{print $1}')
 			last=$(date -r "$last_ts" '+%Y-%m-%d' 2>/dev/null); fi
 	fi
 	recent=$([ "$last_ts" -gt 0 ] 2>/dev/null && [ $(( (now - last_ts) / 86400 )) -le 4 ] && echo yes || echo no)

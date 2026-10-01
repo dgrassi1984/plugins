@@ -1,14 +1,15 @@
 ---
 name: setup-benny
 description: Configure Benny and prepare its triage and repro automations. Use when installing Benny or changing its Slack, tracker, repository, routing, control, model, or budget settings.
-disable-model-invocation: true
 ---
+
+DSH: do not follow this file. Load the `setup-benny` skill.
 
 # Set up Benny
 
 Benny ships as a dormant automation pack inside pstack. The plugin manifest exposes only pstack's normal skill root; this file and the two operational files are not slash skills.
 
-The human enters setup by pointing Cursor at the pack's `FOR_AGENTS.md`. The bootstrap flow copies the whole pack into the target repository, then reads this file directly at `.cursor/automations/benny/skills/setup-benny/SKILL.md`.
+The human enters setup by pointing Cursor at the pack's `FOR_AGENTS.md`. The bootstrap flow copies the whole pack into the target repository, then reads this file directly at `an archived pack path this harness does not use/skills/setup-benny/SKILL.md`.
 
 Benny needs external configuration and two live Cursor automations.
 
@@ -18,7 +19,7 @@ Do not create or update an automation until the user explicitly asks. Never put 
 
 Do this before asking for Benny configuration and before invoking the built-in `/automate` skill.
 
-Ask which repository will run the automations. The source pack is the directory containing `FOR_AGENTS.md`. The destination is `<target-repository>/.cursor/automations/benny/`.
+Ask which repository will run the automations. The source pack is the directory containing `FOR_AGENTS.md`. The destination is `<target-repository>/an archived pack path this harness does not use/`.
 
 Merge the entire source pack into the destination:
 
@@ -31,7 +32,7 @@ Merge the entire source pack into the destination:
 
 If this file is already being read from the target destination, treat the copy as complete and run the same verification before continuing.
 
-Add pstack to the target repository's `.cursor/settings.json`. If the file or `.cursor` directory does not exist, create it.
+Add pstack to the target repository's `a settings file this harness does not use`. If the file or `.cursor` directory does not exist, create it.
 
 Merge this entry into the existing JSON or JSONC:
 
@@ -62,9 +63,9 @@ Do not count a skill loaded from the current session or a user-scoped plugin. Th
 
 If project-scoped plugin installation is unavailable or any shared dependency does not resolve, stop and explain the failure.
 
-The Benny files are read directly from `.cursor/automations/benny/`. Do not add that directory to a plugin manifest or expect its `SKILL.md` files to appear in the slash-skill list.
+The Benny files are read directly from `an archived pack path this harness does not use/`. Do not add that directory to a plugin manifest or expect its `SKILL.md` files to appear in the slash-skill list.
 
-Tell the user that `.cursor/settings.json`, `.cursor/automations/benny/`, and any referenced secret-free configuration must be committed before either automation is enabled. Do not commit them unless the user asks.
+Tell the user that `a settings file this harness does not use`, `an archived pack path this harness does not use/`, and any referenced secret-free configuration must be committed before either automation is enabled. Do not commit them unless the user asks.
 
 Once this check passes, live automation prompts may read the committed operational files by their stable repository-relative paths. They must not embed a plugin cache path or copy the file contents.
 
@@ -75,11 +76,11 @@ Open these copied examples:
 - `../../templates/configuration.example.yaml`
 - `../reproduce-and-fix-issues/references/feature-map.example.md`
 
-Create user-owned copies outside `.cursor/automations/benny/`. These are configuration files, not pack files. Example locations:
+Create user-owned copies outside `an archived pack path this harness does not use/`. These are configuration files, not pack files. Example locations:
 
-- Project config, such as `.cursor/benny/configuration.yaml`
-- Project feature map, such as `.cursor/benny/feature-map.md`
-- Project routing map, such as `.cursor/benny/routing.md`
+- Project config, such as `.dsh/benny/configuration.yaml`
+- Project feature map, such as `.dsh/benny/feature-map.md`
+- Project routing map, such as `.dsh/benny/routing.md`
 - User config, such as `~/.config/benny/configuration.yaml`
 - User feature map, such as `~/.config/benny/feature-map.md`
 
@@ -141,7 +142,7 @@ Do not use undocumented integration endpoints.
 
 If the user wants reroutes or owner pings:
 
-1. Copy `../triage-issue-reports/references/routing.example.md` outside `.cursor/automations/benny/`.
+1. Copy `../triage-issue-reports/references/routing.example.md` outside `an archived pack path this harness does not use/`.
 2. Replace every placeholder with public or organization-local values.
 3. Keep owner pings off by default.
 4. Allow a ping only for a configured feature owner or a confirmed likely regression author.
@@ -178,7 +179,7 @@ For each automation:
 
 1. Read the matching copied prompt template as secondary internal source material.
 2. Turn `FOR_AGENTS.md`, the finished Benny configuration, and the template intent into a complete natural-language request.
-3. Tell the live prompt to read and follow its exact committed operational file under `.cursor/automations/benny/`.
+3. Tell the live prompt to read and follow its exact committed operational file under `an archived pack path this harness does not use/`.
 4. Use the stable repository-relative path, not a plugin source or cache path. Do not copy the operational file contents into the live prompt.
 5. Read and follow the built-in `automate` skill.
 6. Let `automate` discover Slack channels, the repository, and connected integrations.
@@ -189,7 +190,7 @@ For each automation:
 Give `automate` this complete triage intent, filled from configuration:
 
 - Name `benny-triage`.
-- Read and follow `.cursor/automations/benny/skills/triage-issue-reports/SKILL.md` for every run.
+- Read and follow `an archived pack path this harness does not use/skills/triage-issue-reports/SKILL.md` for every run.
 - Trigger on each new top-level report in the configured source Slack channel.
 - Read the triggering thread and reply only inside it.
 - Use the configured issue-tracker integration.
@@ -200,7 +201,7 @@ Give `automate` this complete triage intent, filled from configuration:
 After the triage editor handoff is complete, give `automate` this complete repro and fix intent:
 
 - Name `benny-reproduce`.
-- Read and follow `.cursor/automations/benny/skills/reproduce-and-fix-issues/SKILL.md` for every run.
+- Read and follow `an archived pack path this harness does not use/skills/reproduce-and-fix-issues/SKILL.md` for every run.
 - Trigger on the same new top-level reports in the configured source Slack channel.
 - Use the configured repository and default branch.
 - Read the source thread and reply only inside it.
@@ -222,7 +223,7 @@ Finish configuration, routing, control-adapter, and feature-map validation. Then
 For the existing triage automation, update:
 
 - Name and description
-- Direct instruction to read `.cursor/automations/benny/skills/triage-issue-reports/SKILL.md`
+- Direct instruction to read `an archived pack path this harness does not use/skills/triage-issue-reports/SKILL.md`
 - New top-level Slack report trigger and source channel
 - Slack thread read and reply capabilities
 - Issue-tracker integration
@@ -231,7 +232,7 @@ For the existing triage automation, update:
 For the existing repro automation, update:
 
 - Name and description
-- Direct instruction to read `.cursor/automations/benny/skills/reproduce-and-fix-issues/SKILL.md`
+- Direct instruction to read `an archived pack path this harness does not use/skills/reproduce-and-fix-issues/SKILL.md`
 - Matching Slack trigger and source channel
 - Repository and default branch
 - Slack thread read and reply capabilities
@@ -251,7 +252,7 @@ Do not enable either automation until the thread-safety test passes after the ed
 
 Use a test channel or a harmless test report.
 
-Before testing, confirm that the target repository's `.cursor/settings.json`, `.cursor/automations/benny/`, and every referenced secret-free configuration file are committed on the branch used by the automation checkout. Confirm that both live prompts point at their exact committed operational files. If any check fails, stop. Tell the user that the automation cannot be enabled yet.
+Before testing, confirm that the target repository's `a settings file this harness does not use`, `an archived pack path this harness does not use/`, and every referenced secret-free configuration file are committed on the branch used by the automation checkout. Confirm that both live prompts point at their exact committed operational files. If any check fails, stop. Tell the user that the automation cannot be enabled yet.
 
 Verify:
 
