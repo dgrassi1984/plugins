@@ -37,7 +37,7 @@ If a candidate fails to produce output, proceed with N-1 and note the dropout in
 
 ## Phase C: Cross-judge
 
-After all Phase B candidates complete, choose one confirmed model from the `arena cross-judge pool` line in `~/.dsh/pstack-models.md`. A missing line means the parent model. Prefer a different model family from the parent's when one is confirmed. Spawn one read-only judge `subagent` on that route. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. It runs in parallel with the parent's reading in Phase D, not with the candidates themselves. Don't spawn the judge while candidates are still writing.
+After all Phase B candidates complete, choose one entry from the `arena cross-judge pool` line in `~/.dsh/pstack-models.md`. A missing line means `inherit-parent`. Prefer a different model family from the parent's only when `list_subagent_models` lists that route and the `subagent` schema exposes `provider` and `model`. Otherwise omit them and say the judge inherited the parent. Spawn one `subagent` and tell it not to write files. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. Set `run_in_background: true` so it runs while the parent reads in Phase D. Don't spawn the judge while candidates are still writing.
 
 ## Phase D: Pick a base
 
